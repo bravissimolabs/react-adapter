@@ -1,14 +1,14 @@
 'use strict';
 
-require('babel-register')({
-    extensions: ['.jsx'],
-    presets: ['react', 'es2015'],
-    plugins: ['add-module-exports']
-});
-
 const Adapter    = require('@frctl/fractal').Adapter;
 const React      = require('react');
 const ReactDOM   = require('react-dom/server');
+
+const defaultBabelConfig = {
+    extensions: ['.jsx'],
+    presets: ['react', 'es2015'],
+    plugins: ['add-module-exports']
+};
 
 class ReactAdapter extends Adapter {
 
@@ -33,7 +33,7 @@ class ReactAdapter extends Adapter {
     renderLayout(path, str, context) {
         const Layout = require(path);
         const layout = React.createElement(Layout, context);
-        const html   = ReactDOM.renderToStaticMarkup(layout);
+        const html = ReactDOM.renderToStaticMarkup(layout);
         return Promise.resolve(html);
     }
 
@@ -42,6 +42,8 @@ class ReactAdapter extends Adapter {
 module.exports = function(config) {
 
     config = config || {};
+
+    require('babel-register')(config.babel || defaultBabelConfig);
 
     return {
         register(source, app) {
