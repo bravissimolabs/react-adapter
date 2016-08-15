@@ -1,31 +1,52 @@
 'use strict';
 
-require("babel-register")({
-    extensions: [".jsx"],
-    presets: ['react', 'es2015']
+require('babel-register')({
+    extensions: ['.jsx'],
+    presets: ['react', 'es2015'],
+    plugins: ['add-module-exports']
 });
 
-const Handlebars = require('handlebars');
+const Adapter    = require('@frctl/fractal').Adapter;
 const React      = require('react');
 const ReactDOM   = require('react-dom/server');
 
-module.exports = function(source, config){
+class ReactAdapter extends Adapter {
+
+    constructor(source, app, config) {
+        super(null, source);
+        this._app = app;
+        this._config = config;
+    }
+
+    render(path, str, context) {
+        delete require.cache[path];
+        const config    = this._config;
+        const component = require(path);
+        const element   = React.createElement(component, context);
+        const root      = (config.wrapperComponent)
+            ? React.createElement(config.wrapperComponent, {}, element)
+            : element;
+        const html = ReactDOM.renderToStaticMarkup(root);
+        return Promise.resolve(html);
+    }
+
+    renderLayout(path, str, context) {
+        const Layout = require(path);
+        const layout = React.createElement(Layout, context);
+        const html   = ReactDOM.renderToStaticMarkup(layout);
+        return Promise.resolve(html);
+    }
+
+}
+
+module.exports = function(config) {
 
     config = config || {};
 
     return {
-
-        render: function(path, str, context){
-            delete require.cache[path];
-            const component = require(path);
-            const element   = React.createElement(component, context);
-            const html      = ReactDOM.renderToStaticMarkup(element);
-            return Promise.resolve(html);
-        },
-
-        renderLayout: function(path, str, context){
-            const template = Handlebars.compile(str);
-            return Promise.resolve(template(context));
+        register(source, app) {
+            return new ReactAdapter(source, app, config);
         }
     }
+
 };
