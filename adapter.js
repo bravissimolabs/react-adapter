@@ -23,8 +23,11 @@ class ReactAdapter extends Adapter {
         const config    = this._config;
         const component = require(path);
         const element   = React.createElement(component, context);
-        const root      = (config.wrapperComponent)
-            ? React.createElement(config.wrapperComponent, {}, element)
+        const root      = (config.wrapper && config.wrapper.component)
+            ? React.createElement(
+                config.wrapper.component,
+                config.wrapper.props || {},
+                element)
             : element;
         const html = ReactDOM.renderToStaticMarkup(root);
         return Promise.resolve(html);
