@@ -46,7 +46,8 @@ module.exports = function(config) {
 
     config = config || {};
 
-    require('babel-register')(config.babel || defaultBabelConfig);
+    const babelConfig = Object.assign({}, defaultBabelConfig, config.babel);
+    require('babel-register')(babelConfig);
 
     return {
         register(source, app) {
